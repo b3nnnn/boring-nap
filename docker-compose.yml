@@ -1,0 +1,36 @@
+version: '3.2'
+
+networks:
+   boring:
+      driver: bridge
+      driver_opts:
+         com.docker.network.bridge.name: br-docker-0 
+      ipam:
+         config:
+             - subnet: 172.20.0.0/16
+
+services:
+  app:
+    restart: always
+    image: ghcr.io/b3nnnn/boring/boring
+    networks:
+       - boring
+
+  nginx:
+    restart: always
+    image: ghcr.io/b3nnnn/boring/boring-nap
+    links: 
+      - app
+    ports:
+      - "80:80"
+      - "8000:8000"
+    volumes:
+      - ./etc/nginx/nap_test.conf:/etc/nginx/nap_test.conf.new
+      - ./nginx/log:/var/log/nginx
+    links:
+      - app:app
+    networks:
+      - boring
+    labels:
+       application: "reverse_proxy"
+

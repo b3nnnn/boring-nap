@@ -1,0 +1,70 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: boring 
+  annotations:
+    ves.io/sites: ves-io-system/sg3-sin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: boring 
+  template:
+    metadata:
+      labels:
+        app: boring 
+    spec:
+      containers:
+        - name: boring 
+          image: ghcr.io/b3nnnn/boring/boring:latest 
+          ports:
+            - containerPort: 5000 
+              protocol: TCP
+        - name: boring-nap
+          image: ghcr.io/b3nnnn/boring/boring-nap:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+          - mountPath: /etc/nginx/nginx.conf
+            readOnly: true
+            name: nginx-conf
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf # place ConfigMap `nginx-conf` on /etc/nginx
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: boring
+  labels:
+    app: boring
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000 
+  selector:
+    app: boring
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: boring-nap
+  labels:
+    app: boring-nap
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  selector:
+    app: boring-nap
+  type: ClusterIP
+  sessionAffinity: None
